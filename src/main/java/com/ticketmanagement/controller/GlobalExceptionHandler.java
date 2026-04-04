@@ -17,6 +17,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleEntityNotFound(EntityNotFoundException ex) {
+        System.out.println("[GlobalExceptionHandler.handleEntityNotFound] EntityNotFoundException: " + ex.getMessage());
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 ex.getMessage(),
@@ -27,6 +28,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
+        System.out.println("[GlobalExceptionHandler.handleIllegalState] IllegalStateException: " + ex.getMessage());
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage(),
@@ -44,6 +46,8 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
+        System.out.println("[GlobalExceptionHandler.handleValidationExceptions] Validation failed: " + errors);
+
         Map<String, Object> response = new HashMap<>();
         response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("errors", errors);
@@ -54,6 +58,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        System.out.println("[GlobalExceptionHandler.handleGenericException] Unexpected exception: " + ex.getMessage());
+        ex.printStackTrace();
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "An unexpected error occurred: " + ex.getMessage(),

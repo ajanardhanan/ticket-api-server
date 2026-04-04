@@ -26,17 +26,21 @@ public class TicketService {
 
     @Transactional
     public Ticket createTicket(CreateTicketRequest request) {
+        System.out.println("[TicketService.createTicket] Entry - Creating ticket with title: '" + request.getTitle() + "', priority: " + request.getPriority());
         Ticket ticket = new Ticket();
         ticket.setTitle(request.getTitle());
         ticket.setDescription(request.getDescription());
         ticket.setPriority(request.getPriority());
         ticket.setStatus(Ticket.TicketStatus.OPEN);
 
-        return ticketRepository.save(ticket);
+        Ticket saved = ticketRepository.save(ticket);
+        System.out.println("[TicketService.createTicket] Exit - Ticket created with ID: " + saved.getId() + ", status: " + saved.getStatus());
+        return saved;
     }
 
     @Transactional
     public Ticket assignTicket(Long ticketId, AssignTicketRequest request) {
+        System.out.println("[TicketService.assignTicket] Entry - Assigning ticket " + ticketId + " to agent " + request.getAgentId());
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id: " + ticketId));
 
@@ -46,11 +50,14 @@ public class TicketService {
         ticket.setAssignedAgent(agent);
         ticket.setStatus(Ticket.TicketStatus.IN_PROGRESS);
 
-        return ticketRepository.save(ticket);
+        Ticket saved = ticketRepository.save(ticket);
+        System.out.println("[TicketService.assignTicket] Exit - Ticket " + ticketId + " assigned to agent " + agent.getId() + " (" + agent.getName() + "), status: IN_PROGRESS");
+        return saved;
     }
 
     @Transactional
     public Ticket updateTicket(Long ticketId, UpdateTicketRequest request) {
+        System.out.println("[TicketService.updateTicket] Entry - Updating ticket " + ticketId);
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id: " + ticketId));
 
@@ -67,35 +74,44 @@ public class TicketService {
             ticket.setPriority(request.getPriority());
         }
 
-        return ticketRepository.save(ticket);
+        Ticket saved = ticketRepository.save(ticket);
+        System.out.println("[TicketService.updateTicket] Exit - Ticket " + ticketId + " updated successfully");
+        return saved;
     }
 
     @Transactional
     public Ticket closeTicket(Long ticketId) {
+        System.out.println("[TicketService.closeTicket] Entry - Closing ticket " + ticketId);
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id: " + ticketId));
 
         ticket.setStatus(Ticket.TicketStatus.CLOSED);
         ticket.setClosedAt(LocalDateTime.now());
 
-        return ticketRepository.save(ticket);
+        Ticket saved = ticketRepository.save(ticket);
+        System.out.println("[TicketService.closeTicket] Exit - Ticket " + ticketId + " closed at " + saved.getClosedAt());
+        return saved;
     }
 
     @Transactional
     public Rating rateTicket(Long ticketId, RateTicketRequest request) {
+        System.out.println("[TicketService.rateTicket] Entry - Rating ticket " + ticketId + " with score: " + request.getScore());
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id: " + ticketId));
 
         if (ticket.getAssignedAgent() == null) {
+            System.out.println("[TicketService.rateTicket] Warning - Cannot rate ticket " + ticketId + " - no assigned agent");
             throw new IllegalStateException("Cannot rate a ticket that has no assigned agent");
         }
 
         if (ticket.getStatus() != Ticket.TicketStatus.CLOSED) {
+            System.out.println("[TicketService.rateTicket] Warning - Cannot rate ticket " + ticketId + " - status is " + ticket.getStatus() + " (must be CLOSED)");
             throw new IllegalStateException("Can only rate closed tickets");
         }
 
         // Check if rating already exists
         if (ratingRepository.findByTicket(ticket).isPresent()) {
+            System.out.println("[TicketService.rateTicket] Warning - Ticket " + ticketId + " has already been rated");
             throw new IllegalStateException("Ticket has already been rated");
         }
 
@@ -105,14 +121,17 @@ public class TicketService {
         rating.setScore(request.getScore());
         rating.setFeedback(request.getFeedback());
 
-        return ratingRepository.save(rating);
+        Rating saved = ratingRepository.save(rating);
+        System.out.println("[TicketService.rateTicket] Exit - Ticket " + ticketId + " rated with score " + request.getScore() + " for agent " + ticket.getAssignedAgent().getId());
+        return saved;
     }
 
     @Transactional(readOnly = true)
     public List<AgentRatingResponse> getAgentRatings() {
+        System.out.println("[TicketService.getAgentRatings] Entry - Retrieving agent ratings");
         List<RatingRepository.AgentRatingProjection> projections = ratingRepository.findAgentAverageRatings();
 
-        return projections.stream()
+        List<AgentRatingResponse> responses = projections.stream()
                 .map(p -> new AgentRatingResponse(
                         p.getAgentId(),
                         p.getAgentName(),
@@ -120,16 +139,24 @@ public class TicketService {
                         p.getTotalRatings()
                 ))
                 .collect(Collectors.toList());
+        System.out.println("[TicketService.getAgentRatings] Exit - Retrieved ratings for " + responses.size() + " agents");
+        return responses;
     }
 
     @Transactional(readOnly = true)
     public Ticket getTicket(Long ticketId) {
-        return ticketRepository.findById(ticketId)
+        System.out.println("[TicketService.getTicket] Entry - Retrieving ticket " + ticketId);
+        Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id: " + ticketId));
+        System.out.println("[TicketService.getTicket] Exit - Ticket " + ticketId + " retrieved, status: " + ticket.getStatus());
+        return ticket;
     }
 
     @Transactional(readOnly = true)
     public List<Ticket> getAllTickets() {
-        return ticketRepository.findAll();
+        System.out.println("[TicketService.getAllTickets] Entry - Retrieving all tickets");
+        List<Ticket> tickets = ticketRepository.findAll();
+        System.out.println("[TicketService.getAllTickets] Exit - Retrieved " + tickets.size() + " tickets");
+        return tickets;
     }
 }
