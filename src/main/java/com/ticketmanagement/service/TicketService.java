@@ -7,10 +7,8 @@ import com.ticketmanagement.model.Ticket;
 import com.ticketmanagement.repository.AgentRepository;
 import com.ticketmanagement.repository.RatingRepository;
 import com.ticketmanagement.repository.TicketRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,7 +22,6 @@ public class TicketService {
     private final AgentRepository agentRepository;
     private final RatingRepository ratingRepository;
 
-    @Transactional
     public Ticket createTicket(CreateTicketRequest request) {
         System.out.println("[TicketService.createTicket] Entry - Creating ticket with title: '" + request.getTitle() + "', priority: " + request.getPriority());
         Ticket ticket = new Ticket();
@@ -38,16 +35,15 @@ public class TicketService {
         return saved;
     }
 
-    @Transactional
-    public Ticket assignTicket(Long ticketId, AssignTicketRequest request) {
+    public Ticket assignTicket(String ticketId, AssignTicketRequest request) {
         System.out.println("[TicketService.assignTicket] Entry - Assigning ticket " + ticketId + " to agent " + request.getAgentId());
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id: " + ticketId));
+                .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
 
         Agent agent = agentRepository.findById(request.getAgentId())
-                .orElseThrow(() -> new EntityNotFoundException("Agent not found with id: " + request.getAgentId()));
+                .orElseThrow(() -> new RuntimeException("Agent not found with id: " + request.getAgentId()));
 
-        ticket.setAssignedAgent(agent);
+        ticket.setAssignedAgentId(agent.getId());
         ticket.setStatus(Ticket.TicketStatus.IN_PROGRESS);
 
         Ticket saved = ticketRepository.save(ticket);
@@ -55,11 +51,10 @@ public class TicketService {
         return saved;
     }
 
-    @Transactional
-    public Ticket updateTicket(Long ticketId, UpdateTicketRequest request) {
+    public Ticket updateTicket(String ticketId, UpdateTicketRequest request) {
         System.out.println("[TicketService.updateTicket] Entry - Updating ticket " + ticketId);
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id: " + ticketId));
+                .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
 
         if (request.getTitle() != null) {
             ticket.setTitle(request.getTitle());
@@ -79,11 +74,10 @@ public class TicketService {
         return saved;
     }
 
-    @Transactional
-    public Ticket closeTicket(Long ticketId) {
+    public Ticket closeTicket(String ticketId) {
         System.out.println("[TicketService.closeTicket] Entry - Closing ticket " + ticketId);
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id: " + ticketId));
+                .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
 
         ticket.setStatus(Ticket.TicketStatus.CLOSED);
         ticket.setClosedAt(LocalDateTime.now());
@@ -93,13 +87,12 @@ public class TicketService {
         return saved;
     }
 
-    @Transactional
-    public Rating rateTicket(Long ticketId, RateTicketRequest request) {
+    public Rating rateTicket(String ticketId, RateTicketRequest request) {
         System.out.println("[TicketService.rateTicket] Entry - Rating ticket " + ticketId + " with score: " + request.getScore());
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id: " + ticketId));
+                .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
 
-        if (ticket.getAssignedAgent() == null) {
+        if (ticket.getAssignedAgentId() == null) {
             System.out.println("[TicketService.rateTicket] Warning - Cannot rate ticket " + ticketId + " - no assigned agent");
             throw new IllegalStateException("Cannot rate a ticket that has no assigned agent");
         }
@@ -110,23 +103,23 @@ public class TicketService {
         }
 
         // Check if rating already exists
-        if (ratingRepository.findByTicket(ticket).isPresent()) {
+        if (ratingRepository.findByTicketId(ticketId).isPresent()) {
             System.out.println("[TicketService.rateTicket] Warning - Ticket " + ticketId + " has already been rated");
             throw new IllegalStateException("Ticket has already been rated");
         }
 
         Rating rating = new Rating();
-        rating.setTicket(ticket);
-        rating.setAgent(ticket.getAssignedAgent());
+        rating.setTicketId(ticketId);
+        rating.setAgentId(ticket.getAssignedAgentId());
         rating.setScore(request.getScore());
         rating.setFeedback(request.getFeedback());
+        rating.setCreatedAt(LocalDateTime.now());
 
         Rating saved = ratingRepository.save(rating);
-        System.out.println("[TicketService.rateTicket] Exit - Ticket " + ticketId + " rated with score " + request.getScore() + " for agent " + ticket.getAssignedAgent().getId());
+        System.out.println("[TicketService.rateTicket] Exit - Ticket " + ticketId + " rated with score " + request.getScore() + " for agent " + ticket.getAssignedAgentId());
         return saved;
     }
 
-    @Transactional(readOnly = true)
     public List<AgentRatingResponse> getAgentRatings() {
         System.out.println("[TicketService.getAgentRatings] Entry - Retrieving agent ratings");
         List<RatingRepository.AgentRatingProjection> projections = ratingRepository.findAgentAverageRatings();
@@ -143,16 +136,14 @@ public class TicketService {
         return responses;
     }
 
-    @Transactional(readOnly = true)
-    public Ticket getTicket(Long ticketId) {
+    public Ticket getTicket(String ticketId) {
         System.out.println("[TicketService.getTicket] Entry - Retrieving ticket " + ticketId);
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id: " + ticketId));
+                .orElseThrow(() -> new RuntimeException("Ticket not found with id: " + ticketId));
         System.out.println("[TicketService.getTicket] Exit - Ticket " + ticketId + " retrieved, status: " + ticket.getStatus());
         return ticket;
     }
 
-    @Transactional(readOnly = true)
     public List<Ticket> getAllTickets() {
         System.out.println("[TicketService.getAllTickets] Entry - Retrieving all tickets");
         List<Ticket> tickets = ticketRepository.findAll();

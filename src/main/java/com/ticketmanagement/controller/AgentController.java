@@ -34,7 +34,7 @@ public class AgentController {
     }
 
     @GetMapping("/{agentId}")
-    public ResponseEntity<Agent> getAgent(@PathVariable Long agentId) {
+    public ResponseEntity<Agent> getAgent(@PathVariable String agentId) {
         System.out.println("[AgentController.getAgent] Entry - Retrieving agent " + agentId);
         return agentRepository.findById(agentId)
                 .map(agent -> {
