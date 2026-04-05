@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 public class AssignTicketRequest {
 
     @NotNull(message = "Agent ID is required")
-    private Long agentId;
+    private String agentId;
 }

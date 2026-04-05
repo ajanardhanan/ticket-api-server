@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AgentRatingResponse {
 
-    private Long agentId;
+    private String agentId;
     private String agentName;
     private Double averageScore;
     private Long totalRatings;

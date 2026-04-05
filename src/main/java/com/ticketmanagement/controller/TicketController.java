@@ -29,7 +29,7 @@ public class TicketController {
 
     @PutMapping("/{ticketId}/assign")
     public ResponseEntity<Ticket> assignTicket(
-            @PathVariable Long ticketId,
+            @PathVariable String ticketId,
             @Valid @RequestBody AssignTicketRequest request) {
         System.out.println("[TicketController.assignTicket] Entry - Assigning ticket " + ticketId + " to agent ID: " + request.getAgentId());
         Ticket ticket = ticketService.assignTicket(ticketId, request);
@@ -39,7 +39,7 @@ public class TicketController {
 
     @PutMapping("/{ticketId}")
     public ResponseEntity<Ticket> updateTicket(
-            @PathVariable Long ticketId,
+            @PathVariable String ticketId,
             @Valid @RequestBody UpdateTicketRequest request) {
         System.out.println("[TicketController.updateTicket] Entry - Updating ticket " + ticketId);
         Ticket ticket = ticketService.updateTicket(ticketId, request);
@@ -48,7 +48,7 @@ public class TicketController {
     }
 
     @PutMapping("/{ticketId}/close")
-    public ResponseEntity<Ticket> closeTicket(@PathVariable Long ticketId) {
+    public ResponseEntity<Ticket> closeTicket(@PathVariable String ticketId) {
         System.out.println("[TicketController.closeTicket] Entry - Closing ticket " + ticketId);
         Ticket ticket = ticketService.closeTicket(ticketId);
         System.out.println("[TicketController.closeTicket] Exit - Ticket " + ticketId + " closed successfully");
@@ -57,7 +57,7 @@ public class TicketController {
 
     @PostMapping("/{ticketId}/rate")
     public ResponseEntity<Rating> rateTicket(
-            @PathVariable Long ticketId,
+            @PathVariable String ticketId,
             @Valid @RequestBody RateTicketRequest request) {
         System.out.println("[TicketController.rateTicket] Entry - Rating ticket " + ticketId + " with score: " + request.getScore());
         Rating rating = ticketService.rateTicket(ticketId, request);
@@ -66,7 +66,7 @@ public class TicketController {
     }
 
     @GetMapping("/{ticketId}")
-    public ResponseEntity<Ticket> getTicket(@PathVariable Long ticketId) {
+    public ResponseEntity<Ticket> getTicket(@PathVariable String ticketId) {
         System.out.println("[TicketController.getTicket] Entry - Retrieving ticket " + ticketId);
         Ticket ticket = ticketService.getTicket(ticketId);
         System.out.println("[TicketController.getTicket] Exit - Ticket " + ticketId + " retrieved successfully");
