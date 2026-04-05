@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  ticket-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ticket-api-server:latest
+    container_name: ticket-api-server
+    ports:
+      - "8080:8080"
+    environment:
+      # GCP Project Configuration
+      - GCP_PROJECT_ID=aihealthcare-449603
+
+      # Java Options
+      - JAVA_OPTS=-Xms256m -Xmx512m
+
+      # Spring Boot Configuration
+      - SPRING_PROFILES_ACTIVE=default
+
+      # GCP Credentials Path (mount service account key)
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/gcp/service-account-key.json
+
+    volumes:
+      # Mount GCP service account key
+      # Replace with your actual key path
+      - ${GCP_KEY_PATH:-./gcp-key.json}:/app/gcp/service-account-key.json:ro
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    networks:
+      - ticket-network
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  ticket-network:
+    driver: bridge
