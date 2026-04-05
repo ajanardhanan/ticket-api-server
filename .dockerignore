@@ -1,0 +1,63 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/
+mvnw
+mvnw.cmd
+
+# IDE
+.idea
+*.iws
+*.iml
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+!FIRESTORE_MIGRATION.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Test
+src/test/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# GCP credentials (should be mounted, not copied)
+*-key.json
+*.json
+!pom.xml
+gcp-key.json
+
+# Build artifacts
+*.class
+*.jar
+*.war
+*.ear
+
+# Application specific
+ticket-management/
